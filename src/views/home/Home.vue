@@ -5,11 +5,7 @@
       <div slot="center">购物街</div>
     </nav-bar>
     <!-- 可滚动的区域 -->
-    <scroll class="wrapper" ref="scroll"
-            :probe-type="3"
-            :pull-up-load="true"
-            @scroll="contentScroll"
-            @pullingUp="loadMore">
+    <scroll class="wrapper" ref="scroll" :probe-type="3" :pull-up-load="true" @scroll="contentScroll" @pullingUp="loadMore">
       <!-- 轮播图 -->
       <home-swiper :banners="banners" />
       <!-- 推荐栏 -->
@@ -17,7 +13,7 @@
       <!-- 本周推荐 -->
       <feature-view />
       <!-- 流行/新款/精选导航栏 -->
-      <tab-control class="tab-control" :titles="['流行', '新款', '精选']" @tabClick="tabClick" />
+      <tab-control class="tab-control" :titles="['流行', '新款', '精选']" @tabClick="tabClick" ref="tabControl" />
       <!-- 流行/新款/精选详细信息展示 -->
       <goods-list :goods="getGoodsList" />
     </scroll>
@@ -45,6 +41,8 @@
     getHomeGoods
   } from 'network/home'
 
+  // common模块
+  import {debounce} from 'common/utils'
 
   export default {
     name: "Home",
@@ -67,7 +65,8 @@
           }
         },
         currentType: 'pop',
-        isShowBackTop: false
+        isShowBackTop: false,
+        tabControlOffsetTop: 0
       }
     },
     computed: {
@@ -100,10 +99,6 @@
       },
       loadMore() {
         this.getGoods(this.currentType)
-        // 请求一次数据完成后，要告诉better-scroll，上拉事件已经完成，否则不能完成下次上拉加载数据事件
-        this.$refs.scroll.finishPullUp()
-        // 加载完成后，对better-scroll进行刷新
-        this.$refs.scroll.refresh()
       },
       /**
        * 网络请求相关的方法
@@ -119,6 +114,9 @@
         getHomeGoods(type, page).then(res => {
           this.goods[type].page = page
           this.goods[type].list.push(...res.data.list)
+
+          // 请求一次数据完成后，要告诉better-scroll，上拉事件已经完成，否则不能完成下次上拉加载数据事件
+          this.$refs.scroll.finishPullUp()
         }).catch(err => console.log(err))
       }
     },
@@ -143,8 +141,15 @@
       this.getGoods('sell')
     },
     mounted() {
-      // 对better-scroll进行刷新
-      this.$refs.scroll.refresh()
+      // 1. 图片加载完成的事件监听
+      // 在元素创建完成以后，就要开始监听图片加载事件
+      const refresh = debounce(this.$refs.scroll.refresh, 50)
+      this.$bus.$on("itemImgLoaded", () => {
+        refresh()
+      })
+
+      // 2.获取tabControl的offsetTop
+      console.log(this.$refs.tabControl.$el.offsetTop)
     }
   }
 </script>
@@ -168,12 +173,5 @@
     background-color: var(--color-tint);
     color: #fff;
     z-index: 999;
-  }
-
-  .tab-control {
-    position: sticky;
-    top: 44px;
-    background-color: #fff;
-    z-index: 666;
   }
 </style>

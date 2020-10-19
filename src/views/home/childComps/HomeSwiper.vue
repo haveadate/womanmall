@@ -1,7 +1,7 @@
 <template>
   <div>
-    <swiper>
-      <swiper-item v-for="(item, key) in banners" :key="key">
+    <swiper v-if="banners.length">
+      <swiper-item v-for="(item, index) in banners" :key="index">
         <a :href="item.link">
           <img :src="item.image" />
         </a>
