@@ -4,16 +4,18 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
+    <!-- 流行/新款/精选导航栏 -->
+    <tab-control class="fixed" :titles="['流行', '新款', '精选']" @tabClick="tabClick" ref="tabControl1" v-show="isTabControlFixed" />
     <!-- 可滚动的区域 -->
     <scroll class="wrapper" ref="scroll" :probe-type="3" :pull-up-load="true" @scroll="contentScroll" @pullingUp="loadMore">
       <!-- 轮播图 -->
-      <home-swiper :banners="banners" />
+      <home-swiper :banners="banners" @swiperImgLoad="swiperImgLoad" />
       <!-- 推荐栏 -->
       <recommend-view :recommends="recommends" />
       <!-- 本周推荐 -->
       <feature-view />
       <!-- 流行/新款/精选导航栏 -->
-      <tab-control class="tab-control" :titles="['流行', '新款', '精选']" @tabClick="tabClick" ref="tabControl" />
+      <tab-control :titles="['流行', '新款', '精选']" @tabClick="tabClick" ref="tabControl2" />
       <!-- 流行/新款/精选详细信息展示 -->
       <goods-list :goods="getGoodsList" />
     </scroll>
@@ -42,7 +44,9 @@
   } from 'network/home'
 
   // common模块
-  import {debounce} from 'common/utils'
+  import {
+    debounce
+  } from 'common/utils'
 
   export default {
     name: "Home",
@@ -66,7 +70,8 @@
         },
         currentType: 'pop',
         isShowBackTop: false,
-        tabControlOffsetTop: 0
+        tabControlOffsetTop: 0,
+        isTabControlFixed: false
       }
     },
     computed: {
@@ -90,15 +95,25 @@
             this.currentType = 'sell'
             break
         }
+        this.$refs.tabControl1.currentIndex = index
+        this.$refs.tabControl2.currentIndex = index
       },
       backTopClick() {
         this.$refs.scroll.scrollTo(0, 0, 500)
       },
       contentScroll(position) {
+        // 1.监听滚动位置，判断回到顶部按钮是否显示
         this.isShowBackTop = -position.y > 1000
+
+        // 2.监听滚动位置，判断tabControl是否吸顶（position：fixed）
+        this.isTabControlFixed = -position.y > this.tabControlOffsetTop
       },
       loadMore() {
         this.getGoods(this.currentType)
+      },
+      swiperImgLoad() {
+        // 获取tabControl的offsetTop
+        this.tabControlOffsetTop = this.$refs.tabControl2.$el.offsetTop
       },
       /**
        * 网络请求相关的方法
@@ -147,9 +162,6 @@
       this.$bus.$on("itemImgLoaded", () => {
         refresh()
       })
-
-      // 2.获取tabControl的offsetTop
-      console.log(this.$refs.tabControl.$el.offsetTop)
     }
   }
 </script>
@@ -157,21 +169,32 @@
 <style scoped>
   #home {
     height: 100vh;
-    padding-top: 44px;
+    /* padding-top: 44px; */
   }
 
   .wrapper {
-    height: calc(100% - 49px);
+    position: absolute;
+    top: 44px;
+    left: 0;
+    bottom: 49px;
+    right: 0;
     overflow: hidden;
   }
 
   .home-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
     background-color: var(--color-tint);
     color: #fff;
-    z-index: 999;
+    /* 这是针对原生JS才需要设置的样式，对于better-scroll的局部滚动，则不需要设置此样式 */
+    /* position: fixed; */
+    /* top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999; */
+  }
+
+  .fixed {
+    position: relative;
+    z-index: 888;
+    background-color: #fff;
   }
 </style>
