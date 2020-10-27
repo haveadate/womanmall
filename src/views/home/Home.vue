@@ -71,7 +71,8 @@
         currentType: 'pop',
         isShowBackTop: false,
         tabControlOffsetTop: 0,
-        isTabControlFixed: false
+        isTabControlFixed: false,
+        imgLoadedListener: null
       }
     },
     computed: {
@@ -155,13 +156,19 @@
       this.getGoods('new')
       this.getGoods('sell')
     },
-    mounted() {
+    activated() {
       // 1. 图片加载完成的事件监听
-      // 在元素创建完成以后，就要开始监听图片加载事件
+      // 在将模板挂载完成以后，就要开始监听图片加载事件
       const refresh = debounce(this.$refs.scroll.refresh, 50)
-      this.$bus.$on("itemImgLoaded", () => {
+      this.imgLoadedListener = () => {
         refresh()
-      })
+      }
+
+      this.$bus.$on("itemImgLoaded", this.imgLoadedListener)
+    },
+    deactivated() {
+      // 在切换显示到其它路由组件时，需要注销路由总线中绑定的事件
+      this.$bus.$off("itemImgLoaded", this.imgLoadedListener)
     }
   }
 </script>

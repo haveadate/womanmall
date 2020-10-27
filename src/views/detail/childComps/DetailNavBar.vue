@@ -33,6 +33,8 @@
       },
       titleClick(index) {
         this.activeIndex = index
+        // 将点击标题的下标传递给父组件
+        this.$emit("navItemClick", index)
       }
     },
     activated() {

@@ -1,6 +1,6 @@
 <template>
   <div class="goods-item" @click="itemClick">
-    <img :src="goodsItem.show.img" @load="itemImgLoaded" />
+    <img :src="listItemImg" @load="itemImgLoaded" />
     <div class="goods-item-info">
       <p class="title">{{goodsItem.title}}</p>
       <span class="price left">￥{{goodsItem.price}}</span>
@@ -20,13 +20,20 @@
         }
       }
     },
-    methods:{
+    methods: {
       itemImgLoaded() {
+        // 注意，在很多地方都会使用这个组件，
+        // 所以，在事件监听方面，各个地方需要做一些处理
         this.$bus.$emit("itemImgLoaded")
       },
-			itemClick() {
-				this.$router.push(`/detail/${this.goodsItem.iid}`)
-			}
+      itemClick() {
+        this.$router.push(`/detail/${this.goodsItem.iid}`)
+      }
+    },
+    computed: {
+      listItemImg() {
+        return this.goodsItem.image || this.goodsItem.show.img
+      }
     }
   }
 </script>
@@ -38,7 +45,7 @@
     width: 48%;
   }
 
-  .goods-item > img {
+  .goods-item>img {
     width: 100%;
     border-radius: 3px;
   }
