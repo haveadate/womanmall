@@ -1,11 +1,11 @@
 <template>
   <div id="detail">
-    <detail-nav-bar class="detail-nav" @navItemClick="navItemClick" />
-    <scroll class="detail-content" ref="scroll">
-      <detail-swiper :top-images="topImages" @swiperImgLoaded="swiperImgLoaded" />
+    <detail-nav-bar class="detail-nav" @navItemClick="navItemClick" ref="nav" />
+    <scroll class="detail-content" ref="scroll" :probe-type="3" @scroll="contentScroll">
+      <detail-swiper :top-images="topImages" @swiperImgLoaded="newRefresh" />
       <detail-base-info :goods="goods" />
       <detail-shop-info :shop="shop" />
-      <detail-goods-info :detail-info="detailInfo" @goodsImgLoaded="goodsImgLoaded" />
+      <detail-goods-info :detail-info="detailInfo" @goodsImgLoaded="detailImgLoad" />
       <detail-param-info :param-info="goodsParam" ref="params" />
       <detail-comment-info :comment-info="commentInfo" ref="comment" />
       <goods-list :goods="recommend" ref="recommend" />
@@ -49,9 +49,12 @@
         goodsParam: {},
         commentInfo: {},
         recommend: [],
+        detailImgDebounce: null,
         imgLoadedListener: null,
         navContentOffsetTops: [],
-        navContentDebounce: null
+        navContentDebounce: null,
+        refreshDebounce: null,
+        navCurIdx: 0
       }
     },
     components: {
@@ -100,35 +103,59 @@
       getDetailRecommend().then(res => {
         this.recommend = res.data.list
       })
+
+      // 4.商品详细信息处图片加载完成后的防抖函数绑定
+      this.detailImgDebounce = debounce(() => {
+        this.newRefresh()
+        this.getContentOffsetTops()
+      }, 50)
+
+      // 5.绑定navContentDebounce
+      this.navContentDebounce = debounce(this.getContentOffsetTops, 50)
+
+      // 6.绑定refreshDebounce
+      this.refreshDebounce = debounce(this.newRefresh, 50)
+
+      // 7.绑定推荐图片完成后的事件监听
+      this.imgLoadedListener = () => {
+        this.refreshDebounce()
+        this.navContentDebounce()
+      }
     },
     methods: {
-      swiperImgLoaded() {
-        this.$refs.scroll.refresh()
-      },
-      goodsImgLoaded() {
+      newRefresh() {
         this.$refs.scroll.refresh()
       },
       navItemClick(index) {
+        this.newRefresh()
         this.$refs.scroll.scrollTo(0, -this.navContentOffsetTops[index], 300)
       },
-      getNavContentOffsetTops() {
+      getContentOffsetTops() {
         this.navContentOffsetTops = []
         this.navContentOffsetTops.push(0)
-        this.navContentOffsetTops.push(this.$refs.params.$el.offsetTop - 44)
-        this.navContentOffsetTops.push(this.$refs.comment.$el.offsetTop - 44)
-        this.navContentOffsetTops.push(this.$refs.recommend.$el.offsetTop -44)
+        this.navContentOffsetTops.push(this.$refs.params.$el.offsetTop)
+        this.navContentOffsetTops.push(this.$refs.comment.$el.offsetTop)
+        this.navContentOffsetTops.push(this.$refs.recommend.$el.offsetTop)
+        // 方便后面滚动进度的轮询
+        this.navContentOffsetTops.push(Number.MAX_VALUE)
+      },
+      detailImgLoad() {
+        this.detailImgDebounce()
+      },
+      contentScroll(position) {
+        const positionY = -position.y
+        const forLen = this.navContentOffsetTops.length - 1
+        for (let i = 0; i < forLen; i++) {
+          if (this.navCurIdx !== i && (positionY >= this.navContentOffsetTops[i]
+            && positionY < this.navContentOffsetTops[i + 1])) {
+            this.navCurIdx = i
+            this.$refs.nav.activeIndex = this.navCurIdx
+          }
+        }
       }
     },
     mounted() {
-      // 1.推荐图片加载完成的事件监听
-      // 在将模板挂载完成以后，就要开始监听图片的加载事件
-      const refresh = debounce(this.$refs.scroll.refresh, 50)
-      // 2.对计算navContent添加防抖函数处理
-      const getOffsetDebounce = debounce(this.getNavContentOffsetTops, 50)
-      this.imgLoadedListener = () => {
-        refresh()
-        getOffsetDebounce()
-      }
+      // 推荐商品栏图片刷新后的处理
       this.$bus.$on("itemImgLoaded", this.imgLoadedListener)
     },
     destroyed() {
@@ -147,6 +174,8 @@
   }
 
   .detail-content {
+    /* 使offsetTop属性能够正确获取 */
+    position: relative;
     height: calc(100% - 44px);
     overflow: hidden;
   }

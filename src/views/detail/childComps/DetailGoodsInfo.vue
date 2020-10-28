@@ -21,11 +21,6 @@
         type: Object
       }
     },
-    data() {
-      return {
-        counter: 0,
-      }
-    },
     computed: {
       imgsLen() {
         // 获取图片的个数
@@ -34,9 +29,7 @@
     },
     methods: {
       imgLoad() {
-        if (++this.counter === this.imgsLen) {
-          this.$emit('goodsImgLoaded')
-        }
+        this.$emit('goodsImgLoaded')
       }
     }
   }
