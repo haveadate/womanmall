@@ -19,7 +19,7 @@
       <goods-list :goods="recommend" ref="recommend" />
     </scroll>
     <!-- 底部菜单栏 -->
-    <detail-bottom-bar />
+    <detail-bottom-bar @addToShopcart="addToShopcart" />
     <!-- 回到顶部 -->
     <back-top @click.native="backTopClick" v-show="isShowBackTop" class="top" />
   </div>
@@ -177,6 +177,18 @@
 
         // 监听滚动位置，判断回到顶部按钮是否显示
         this.backTopListener(position)
+      },
+      addToShopcart() {
+        // 1.获取购物车页面需要展示的信息
+        const product = {}
+        product.image = this.topImages[0]
+        product.title = this.goods.title
+        product.desc = this.goods.desc
+        product.price = this.goods.realPrice
+        product.iid = this.iid
+
+        // 2.将商品添加到购物车里
+        this.$store.commit("addGoods", product)
       }
     },
     mounted() {

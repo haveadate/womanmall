@@ -15,7 +15,7 @@
       </div>
     </div>
     <div class="bar-item bar-right">
-      <div class="shopcart">加入购物车</div>
+      <div class="shopcart" @click="addToShopcart">加入购物车</div>
       <div class="purchase">购买</div>
     </div>
   </div>
@@ -32,6 +32,9 @@
     methods: {
       collect() {
         this.isCollect = !this.isCollect
+      },
+      addToShopcart() {
+        this.$emit("addToShopcart")
       }
     }
   }
