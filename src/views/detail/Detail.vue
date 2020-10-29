@@ -1,15 +1,27 @@
 <template>
   <div id="detail">
+    <!-- 顶部导航栏 -->
     <detail-nav-bar class="detail-nav" @navItemClick="navItemClick" ref="nav" />
     <scroll class="detail-content" ref="scroll" :probe-type="3" @scroll="contentScroll">
+      <!-- 内容区域顶部轮播图 -->
       <detail-swiper :top-images="topImages" @swiperImgLoaded="newRefresh" />
+      <!-- 商品信息 -->
       <detail-base-info :goods="goods" />
+      <!-- 店铺信息 -->
       <detail-shop-info :shop="shop" />
+      <!-- 商品详细信息 -->
       <detail-goods-info :detail-info="detailInfo" @goodsImgLoaded="detailImgLoad" />
+      <!-- 规格参数 -->
       <detail-param-info :param-info="goodsParam" ref="params" />
+      <!-- 评论 -->
       <detail-comment-info :comment-info="commentInfo" ref="comment" />
+      <!-- 推荐 -->
       <goods-list :goods="recommend" ref="recommend" />
     </scroll>
+    <!-- 底部菜单栏 -->
+    <detail-bottom-bar />
+    <!-- 回到顶部 -->
+    <back-top @click.native="backTopClick" v-show="isShowBackTop" class="top" />
   </div>
 </template>
 
@@ -21,6 +33,7 @@
   import DetailGoodsInfo from './childComps/DetailGoodsInfo.vue'
   import DetailParamInfo from './childComps/DetailParamInfo.vue'
   import DetailCommentInfo from './childComps/DetailCommentInfo.vue'
+  import DetailBottomBar from './childComps/DetailBottomBar.vue'
 
   import Scroll from 'components/common/scroll/Scroll'
   import GoodsList from 'components/content/goods/GoodsList'
@@ -36,9 +49,17 @@
   import {
     debounce
   } from 'common/utils.js'
+  import {
+    backTop
+  } from 'common/mixin.js'
+  import {
+    DEBOUNCE_SPAN,
+    DETAIL_SCROLL_SPAN
+  } from 'common/const.js'
 
   export default {
     name: "Detail",
+    mixins: [backTop],
     data() {
       return {
         iid: null,
@@ -65,6 +86,7 @@
       DetailGoodsInfo,
       DetailParamInfo,
       DetailCommentInfo,
+      DetailBottomBar,
 
       Scroll,
       GoodsList
@@ -108,13 +130,13 @@
       this.detailImgDebounce = debounce(() => {
         this.newRefresh()
         this.getContentOffsetTops()
-      }, 50)
+      }, DEBOUNCE_SPAN)
 
       // 5.绑定navContentDebounce
-      this.navContentDebounce = debounce(this.getContentOffsetTops, 50)
+      this.navContentDebounce = debounce(this.getContentOffsetTops, DEBOUNCE_SPAN)
 
       // 6.绑定refreshDebounce
-      this.refreshDebounce = debounce(this.newRefresh, 50)
+      this.refreshDebounce = debounce(this.newRefresh, DEBOUNCE_SPAN)
 
       // 7.绑定推荐图片完成后的事件监听
       this.imgLoadedListener = () => {
@@ -128,7 +150,7 @@
       },
       navItemClick(index) {
         this.newRefresh()
-        this.$refs.scroll.scrollTo(0, -this.navContentOffsetTops[index], 300)
+        this.$refs.scroll.scrollTo(0, -this.navContentOffsetTops[index], DETAIL_SCROLL_SPAN)
       },
       getContentOffsetTops() {
         this.navContentOffsetTops = []
@@ -146,12 +168,15 @@
         const positionY = -position.y
         const forLen = this.navContentOffsetTops.length - 1
         for (let i = 0; i < forLen; i++) {
-          if (this.navCurIdx !== i && (positionY >= this.navContentOffsetTops[i]
-            && positionY < this.navContentOffsetTops[i + 1])) {
+          if (this.navCurIdx !== i && (positionY >= this.navContentOffsetTops[i] &&
+              positionY < this.navContentOffsetTops[i + 1])) {
             this.navCurIdx = i
             this.$refs.nav.activeIndex = this.navCurIdx
           }
         }
+
+        // 监听滚动位置，判断回到顶部按钮是否显示
+        this.backTopListener(position)
       }
     },
     mounted() {
@@ -176,7 +201,11 @@
   .detail-content {
     /* 使offsetTop属性能够正确获取 */
     position: relative;
-    height: calc(100% - 44px);
+    height: calc(100% - 44px - 58px);
     overflow: hidden;
+  }
+
+  .top {
+    bottom: 58px;
   }
 </style>

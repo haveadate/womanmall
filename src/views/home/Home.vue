@@ -35,7 +35,6 @@
   import TabControl from 'components/content/tabControl/TabControl'
   import GoodsList from 'components/content/goods/GoodsList'
   import Scroll from 'components/common/scroll/Scroll'
-  import BackTop from 'components/content/backTop/BackTop'
 
   // network模块
   import {
@@ -47,9 +46,14 @@
   import {
     debounce
   } from 'common/utils'
+  import {
+    backTop
+  } from 'common/mixin.js'
+  import {DEBOUNCE_SPAN} from 'common/const.js'
 
   export default {
     name: "Home",
+    mixins: [backTop],
     data() {
       return {
         banners: [],
@@ -69,7 +73,6 @@
           }
         },
         currentType: 'pop',
-        isShowBackTop: false,
         tabControlOffsetTop: 0,
         isTabControlFixed: false,
         imgLoadedListener: null
@@ -99,12 +102,9 @@
         this.$refs.tabControl1.currentIndex = index
         this.$refs.tabControl2.currentIndex = index
       },
-      backTopClick() {
-        this.$refs.scroll.scrollTo(0, 0, 500)
-      },
       contentScroll(position) {
         // 1.监听滚动位置，判断回到顶部按钮是否显示
-        this.isShowBackTop = -position.y > 1000
+        this.backTopListener(position)
 
         // 2.监听滚动位置，判断tabControl是否吸顶（position：fixed）
         this.isTabControlFixed = -position.y > this.tabControlOffsetTop
@@ -144,8 +144,7 @@
       NavBar,
       TabControl,
       GoodsList,
-      Scroll,
-      BackTop
+      Scroll
     },
     created() {
       // 1.请求多个数据(包含导航栏、商品……)
@@ -159,7 +158,7 @@
     activated() {
       // 1. 图片加载完成的事件监听
       // 在将模板挂载完成以后，就要开始监听图片加载事件
-      const refresh = debounce(this.$refs.scroll.refresh, 50)
+      const refresh = debounce(this.$refs.scroll.refresh, DEBOUNCE_SPAN)
       this.imgLoadedListener = () => {
         refresh()
       }
