@@ -26,6 +26,10 @@
 </template>
 
 <script>
+  import {
+    mapActions
+  } from 'vuex'
+
   import DetailNavBar from './childComps/DetailNavBar.vue'
   import DetailSwiper from './childComps/DetailSwiper.vue'
   import DetailBaseInfo from './childComps/DetailBaseInfo.vue'
@@ -145,6 +149,8 @@
       }
     },
     methods: {
+      ...mapActions(['addGoods']),
+
       newRefresh() {
         this.$refs.scroll.refresh()
       },
@@ -188,7 +194,9 @@
         product.iid = this.iid
 
         // 2.将商品添加到购物车里
-        this.$store.commit("addGoods", product)
+        this.addGoods(product).then(res => {
+          this.$toast.show(res, 1500)
+        })
       }
     },
     mounted() {

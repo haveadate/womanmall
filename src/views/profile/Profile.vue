@@ -1,6 +1,6 @@
 <template>
   <div>
-    <scroll class="wrapper" :probe-type="3" @scroll="contentScroll">
+    <scroll class="wrapper">
       <div>个人信息1</div>
       <div>个人信息2</div>
       <div>个人信息3</div>
@@ -112,11 +112,6 @@
     name: "Profile",
     components:{
       Scroll
-    },
-    methods:{
-      contentScroll(position) {
-        console.log(position)
-      }
     }
   }
 </script>
@@ -125,5 +120,6 @@
   .wrapper {
     height: 400px;
     background-color: skyblue;
+    overflow: hidden;
   }
 </style>
