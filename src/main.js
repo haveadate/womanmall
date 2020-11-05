@@ -15,7 +15,7 @@ Vue.use(toast)
 FastClick.attach(document.body)
 // 安装图片懒加载插件
 Vue.use(VueLazyload, {
-  loading: require('assets/img/common/placeholder.png')
+  loading: require('assets/img/common/loading.png')
 })
 
 new Vue({
